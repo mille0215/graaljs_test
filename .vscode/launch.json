@@ -1,0 +1,67 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // 開いている .js を GraalJS で起動し、VSCode 組み込みの JS デバッガでアタッチする
+      // (js-debug が run.ps1 を直接起動し、attachSimplePort のポートが開いたらアタッチする。preLaunchTask は使わない)
+      "name": "GraalJS: 現在のファイルをデバッグ",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "powershell.exe",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/scripts/run.ps1", "-Inspect"],
+      "program": "${file}",
+      "cwd": "${workspaceFolder}",
+      "attachSimplePort": 9229,
+      // 統合ターミナルだと、セッション終了時に js-debug がプロセスを止めて「終了コード 1」のダイアログが出るため、デバッグコンソールに出す
+      "console": "internalConsole",
+      // print / Java 側のエラー出力 (stdout/stderr) を表示する。既定の "console" だと stderr が出ない
+      "outputCapture": "std",
+      "timeout": 60000,
+      "skipFiles": ["<node_internals>/**"],
+      // GraalJS のスクリプトハッシュは V8 と形式が違うため、検証すると同じファイルが別タブ (読み取り専用) で開かれる
+      "enableContentValidation": false
+    },
+    {
+      // スクリプト先頭で停止したい場合
+      "name": "GraalJS: 現在のファイルをデバッグ (先頭で停止)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "powershell.exe",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/scripts/run.ps1", "-InspectBrk"],
+      "program": "${file}",
+      "cwd": "${workspaceFolder}",
+      "attachSimplePort": 9229,
+      // 統合ターミナルだと、セッション終了時に js-debug がプロセスを止めて「終了コード 1」のダイアログが出るため、デバッグコンソールに出す
+      "console": "internalConsole",
+      // print / Java 側のエラー出力 (stdout/stderr) を表示する。既定の "console" だと stderr が出ない
+      "outputCapture": "std",
+      "timeout": 60000,
+      "skipFiles": ["<node_internals>/**"],
+      // GraalJS のスクリプトハッシュは V8 と形式が違うため、検証すると同じファイルが別タブ (読み取り専用) で開かれる
+      "enableContentValidation": false
+    },
+    {
+      // 既に別ターミナルで scripts/run.ps1 -Inspect ... を起動している場合
+      "name": "GraalJS: 起動済みプロセスにアタッチ",
+      "type": "node",
+      "request": "attach",
+      "address": "127.0.0.1",
+      "port": 9229,
+      "continueOnAttach": true,
+      "skipFiles": ["<node_internals>/**"],
+      // GraalJS のスクリプトハッシュは V8 と形式が違うため、検証すると同じファイルが別タブ (読み取り専用) で開かれる
+      "enableContentValidation": false
+    },
+    {
+      // ホスト側 (Java) の ScriptRunner をデバッグしたい場合 (Extension Pack for Java が必要)
+      "name": "Java: ScriptRunner (ホスト側デバッグ)",
+      "type": "java",
+      "request": "launch",
+      "mainClass": "com.example.graaljs.ScriptRunner",
+      "projectName": "graaljs-runner",
+      "args": "${file}",
+      "vmArgs": "-Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8",
+      "console": "integratedTerminal"
+    }
+  ]
+}

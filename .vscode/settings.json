@@ -1,0 +1,7 @@
+{
+  // Nashorn の構文拡張 (for each 等) は TypeScript 言語サービスが構文エラー扱いするため、JS のエラー表示だけ止める。
+  // 補完・定義ジャンプ・ホバーはそのまま使える。types/*.d.ts (TypeScript) の検証は残る。
+  "[javascript]": {
+    "js/ts.validate.enabled": false
+  }
+}

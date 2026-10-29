@@ -1,0 +1,10 @@
+{
+  // VSCode の JS IntelliSense 用。Nashorn/GraalJS のグローバル (Java, load, print 等) を types/ で宣言している
+  "compilerOptions": {
+    "target": "ES2022",
+    // 本番の Nashorn は ES5.1 なので、補完にも ES5 の標準 API だけを出す
+    "lib": ["ES5"],
+    "checkJs": false
+  },
+  "include": ["diet_templates/**/*.js", "types/**/*.d.ts"]
+}
