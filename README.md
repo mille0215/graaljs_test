@@ -6,13 +6,13 @@ Nashorn 向けに書かれた JavaScript を GraalJS の Nashorn 互換モード
 
 | 要素 | 内容 | ライセンス |
 |---|---|---|
-| JDK | OpenJDK 21 (scoop `java/openjdk21`、jdk.java.net の GPL ビルド) | GPLv2 + CPE |
+| JDK | Eclipse Temurin 21 (scoop `java/temurin21-jdk`)。Amazon Corretto 21 でも可 | GPLv2 + CPE |
 | GraalJS | `org.graalvm.polyglot:js-community` 25.0.5 | UPL / GPLv2 + CPE (Community Edition) |
 | インスペクタ | `org.graalvm.polyglot:inspect-community` 25.0.5 | 同上 |
 | ビルド | Maven (scoop `main/maven`) | Apache 2.0 |
 
 > **注意:** `-community` が付かない `org.graalvm.polyglot:js` / `inspect` は Oracle GraalVM (GFTC ライセンス) です。使わないでください。
-> GraalVM JDK は不要です。GraalJS は普通の OpenJDK 上でライブラリとして動きます (JIT は効かずインタプリタ実行になりますが、デバッグ用途なら問題ありません)。
+> GraalVM JDK は不要です。GraalJS は Temurin などの普通の JDK 上でライブラリとして動きます (JIT は効かずインタプリタ実行になりますが、デバッグ用途なら問題ありません)。
 
 ```
 .vscode/            launch.json (デバッグ構成) / tasks.json (デバッガなし実行、Maven ビルド)
@@ -24,13 +24,51 @@ types/              Nashorn グローバル (Java, load, print …) の型宣言
 
 ## セットアップ
 
+JDK 21 以降 (JRE ではなく JDK) と Maven が必要です。JDK は **Eclipse Temurin** を標準とし、Amazon Corretto でも動きます。どちらも OpenJDK のビルドで、ライセンスは GPLv2 + CPE (無償) です。GraalJS は普通の Java ライブラリとして動くので、GraalVM JDK は不要です。
+
+> Oracle JDK (Oracle 配布のもの) はライセンス条件が異なるため使わないでください。
+
+### Eclipse Temurin (標準)
+
+scoop の場合:
+
 ```powershell
 scoop bucket add java
-scoop install java/openjdk21 main/maven
+scoop install java/temurin21-jdk main/maven
 ```
 
-インストール後は **VSCode を再起動**してください (PATH と `JAVA_HOME` を読み直すため)。
-初回実行時に Maven が依存ライブラリを `~/.m2` にダウンロードします。
+winget の場合 (Maven は別途 scoop などで入れてください):
+
+```powershell
+winget install --id EclipseAdoptium.Temurin.21.JDK --exact
+```
+
+公式サイト (https://adoptium.net/) の MSI インストーラーでも構いません。MSI / winget の場合、インストール時に「Set JAVA_HOME variable」を選ばないと `JAVA_HOME` が設定されないことがあります。
+
+### Amazon Corretto
+
+scoop の場合:
+
+```powershell
+scoop bucket add java
+scoop install java/corretto21-jdk main/maven
+```
+
+winget の場合:
+
+```powershell
+winget install --id Amazon.Corretto.21.JDK --exact
+```
+
+公式サイト (https://aws.amazon.com/corretto/) の MSI インストーラーでも構いません。
+
+### インストール後の確認
+
+1. **VSCode を再起動**してください (PATH と `JAVA_HOME` を読み直すため)。
+2. `mvn -v` の `Java home:` が、入れた JDK を指していることを確認してください。`run.ps1` と Maven はどちらも `JAVA_HOME` の JDK を使います。
+3. `Documents` 配下にプロジェクトを置いている場合は、新しい `java.exe` を「コントロールされたフォルダー アクセス」に許可してください (→ トラブルシューティング)。JDK を入れ替えたり更新したりした場合も同じです。
+
+初回実行時に Maven が依存ライブラリを `~/.m2` にダウンロードします。JDK を入れ替えた後は `target\classpath.txt` を削除するか `mvn -q compile` を実行してビルドし直すと確実です。
 
 ## 使い方
 
@@ -79,7 +117,7 @@ Windows Defender の「コントロールされたフォルダー アクセス�
 
 対処は次のどちらかです。
 
-- 「Windows セキュリティ」→「ウイルスと脅威の防止」→「ランサムウェア防止の管理」→「コントロールされたフォルダー アクセスによるアプリの許可」で `java.exe` を追加する。scoop の `current` ではなくバージョン付きの実パス (例: `C:\Users\<user>\scoop\apps\openjdk21\21.0.2-13\bin\java.exe`) で判定されるため、JDK を更新したら追加し直してください。
+- 「Windows セキュリティ」→「ウイルスと脅威の防止」→「ランサムウェア防止の管理」→「コントロールされたフォルダー アクセスによるアプリの許可」で `java.exe` を追加する。scoop の `current` ではなくバージョン付きの実パス (例: scoop の Temurin なら `C:\Users\<user>\scoop\apps\temurin21-jdk\21.0.12-101.0\bin\java.exe`、MSI の Temurin なら `C:\Program Files\Eclipse Adoptium\jdk-21.x.x-hotspot\bin\java.exe`、MSI の Corretto なら `C:\Program Files\Amazon Corretto\jdk21.x.x_x\bin\java.exe`) で判定されるため、JDK を更新したら追加し直してください。
 - プロジェクトを `Documents` の外 (例: `C:\dev\`) に置く。
 
 ### F5 で最後まで実行すると「ターミナル プロセスが終了コード 1 で終了しました」というダイアログが出る
