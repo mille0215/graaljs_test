@@ -18,7 +18,7 @@ Nashorn 向けに書かれた JavaScript を GraalJS の Nashorn 互換モード
 
 ```
 .vscode/            launch.json (デバッグ構成) / tasks.json (デバッガなし実行、Maven ビルド)
-src/main/java/...   ScriptRunner.java  … jjs の代わりになる実行ランナー / DevDtm.java … 本番の dtm の開発用代替
+src/main/java/...   ScriptRunner.java  … jjs の代わりになる実行ランナー / DevDtm.java … 本番の dtm の開発用代替 / DevDsm.java … dsm の開発用実装
 scripts/run.ps1     ビルド (必要な時だけ) + 実行スクリプト
 scripts/make-bundle.ps1  オフラインバンドルの作成スクリプト
 diet_templates/     デバッグ対象の JS (サンプル: main.js, lib/util.js)
@@ -128,6 +128,10 @@ GraalJS の既定は ES2022 以降なので、`js.ecmascript-version=5` がな�
 
 - ファイルのパス付きで評価しているので、読み込まれた側のファイルにもブレークポイントが効き、ステップ実行で出入りできます。
 - エディタ補完用に `types/nashorn-globals.d.ts` に `dtm` の型を宣言しています。メソッドを追加したら、ここにも追加してください。
+
+`dsm` も同じ形で、`ScriptRunner` が `DevDsm` (`src/main/java/com/example/graaljs/DevDsm.java`) を注入しています。
+
+`[DIEt]...[/DIEt]` は `DietTemplate` が実行前に `dsm.dwrite("...");` へ変換します。タグ内の改行を文字列の行継続として残すので、行番号は元のファイルと一致します (タグと同じ行にあるコードの桁はずれます)。文字列やコメントの判定は簡易的な字句解析なので、`return /"/` のように `return` の直後に書いた正規表現は正規表現と判定されません。
 
 ### エディタの検証設定
 

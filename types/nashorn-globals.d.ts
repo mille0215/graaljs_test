@@ -42,3 +42,9 @@ declare const dtm: {
     /** スクリプトルート配下の `<name>.js` を読み込み、呼び出し元と同じグローバルで実行する */
     require(name: string): any;
 };
+
+// 開発環境では ScriptRunner が DevDsm を注入する
+declare const dsm: {
+    /** 実行したスクリプトのフォルダの `YYYYMMDDHHMMSS.txt` (UTF-8) に出力する。同じ実行中の呼び出しは同じファイルに追記する */
+    dwrite(text: string): void;
+};

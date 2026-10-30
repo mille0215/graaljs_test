@@ -90,6 +90,32 @@ Chrome の `devtools://devtools/bundled/js_app.html?ws=127.0.0.1:9229/graaljs` �
 
 本物の `dtm` にある `require` 以外のメソッドを使う場合は、`src/main/java/com/example/graaljs/DevDtm.java` に同じ名前のメソッドを追加してください。次回の実行時に自動でコンパイルされます。
 
+### `dsm.dwrite`
+
+`dsm.dwrite("text")` は、渡した文字列をテキストファイルに出力します。
+
+- 出力先は実行したスクリプトのフォルダで、ファイル名は実行日時の `YYYYMMDDHHMMSS.txt`、文字コードは UTF-8 です。
+- ファイル名は最初の呼び出しで決まり、同じ実行中の呼び出しはすべて同じファイルに追記されます。
+- 別の実行が同じ秒に作ったファイルがある場合は、上書きせず `FileAlreadyExistsException` になります。
+
+### `[DIEt]` タグ
+
+スクリプト中で `[DIEt]` と `[/DIEt]` で囲んだテキストは、`dsm.dwrite` と同じファイルにそのまま出力されます。`dsm.dwrite` と混在でき、書いた順に出力されます。
+
+```javascript
+dsm.dwrite("a");
+[DIEt]b
+c[/DIEt]dsm.dwrite("d");
+```
+
+この例の出力は `ab`、改行、`cd` です。
+
+- タグの内側の改行はスクリプトファイルの改行コードのまま出力され、`"` や `\` もそのまま出力されます。
+- 文字列リテラル・コメント・正規表現リテラルの中のタグは変換されません。
+- タグは文の区切りとして変換されるので、式の途中には書けません。
+- `[DIEt]` が閉じていない場合や、`[/DIEt]` だけがある場合は `IllegalArgumentException` になります。
+- 変換されるのは実行したスクリプトと `dtm.require` で読み込んだファイルです。`load()` で読み込んだファイルは変換されません。
+
 ### 注意点
 
 - バッククォートは `-Scripting` 時だけ Nashorn と同じくコマンド実行 (`$EXEC`) として扱われます。`-Scripting` なしでは `SyntaxError` になります。ヒアドキュメントと文字列内の `${...}` も `-Scripting` 時だけ使えます。

@@ -29,6 +29,6 @@ public final class DevDtm {
         if (!file.isFile()) {
             throw new IllegalArgumentException("dtm.require: script not found: " + file);
         }
-        return context.eval(Source.newBuilder("js", file).build());
+        return context.eval(DietTemplate.load(file));
     }
 }
