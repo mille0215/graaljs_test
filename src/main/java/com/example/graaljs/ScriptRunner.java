@@ -76,8 +76,8 @@ public final class ScriptRunner {
 
         int exitCode = 0;
         try (Context context = builder.build()) {
-            // 本番システムが注入している dsm の開発用代替。require の読み込み基準は実行したスクリプトのフォルダ
-            context.getBindings("js").putMember("dsm", new DevDsm(context, script.getParentFile()));
+            // 本番システムが注入している dtm の開発用代替。require の読み込み基準は実行したスクリプトのフォルダ
+            context.getBindings("js").putMember("dtm", new DevDtm(context, script.getParentFile()));
             Source source = Source.newBuilder("js", script).build();
             context.eval(source);
         } catch (PolyglotException e) {

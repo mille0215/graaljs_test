@@ -37,8 +37,8 @@ declare let $OUT: string;
 declare let $ERR: string;
 declare let $EXIT: number;
 
-// 本番システムが注入するオブジェクト (開発環境では ScriptRunner が DevDsm を注入する)
-declare const dsm: {
+// 本番システムが注入するオブジェクト (開発環境では ScriptRunner が DevDtm を注入する)
+declare const dtm: {
     /** スクリプトルート配下の `<name>.js` を読み込み、呼び出し元と同じグローバルで実行する */
     require(name: string): any;
 };
