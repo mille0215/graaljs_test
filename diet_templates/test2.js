@@ -1,4 +1,4 @@
-dsm.require("tests");
+dtm.require("tests");
 
 print("Hello World");
 

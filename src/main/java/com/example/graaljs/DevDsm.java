@@ -2,33 +2,38 @@ package com.example.graaljs;
 
 import java.io.File;
 import java.io.IOException;
-
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Source;
-import org.graalvm.polyglot.Value;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
- * 本番システムがスクリプトに注入している {@code dsm} オブジェクトの開発用の代替。
+ * スクリプトに注入する {@code dsm} オブジェクトの開発用の実装。
  *
- * <p>{@code dsm.require("tests")} でスクリプトルート配下の {@code tests.js} を読み込み、
- * 呼び出し元と同じグローバルスコープで実行する (読み込んだ側の var / function はそのまま使える)。
- * ファイルから {@link Source} を作って評価するので、読み込まれた側のファイルにもブレークポイントが効く。
+ * <p>{@code dsm.dwrite("text")} で、スクリプトルート配下に実行日時を名前にしたテキストファイル
+ * ({@code YYYYMMDDHHMMSS.txt}, UTF-8) を出力する。
+ * ファイル名は最初の呼び出しで決まり、同じ実行中の呼び出しはすべて同じファイルに追記する。
+ * 別の実行が同じ秒に作ったファイルがある場合は、上書きせず {@code FileAlreadyExistsException} になる。
  */
 public final class DevDsm {
 
-    private final Context context;
-    private final File root;
+    private static final DateTimeFormatter FILE_NAME = DateTimeFormatter.ofPattern("uuuuMMddHHmmss");
 
-    DevDsm(Context context, File root) {
-        this.context = context;
+    private final File root;
+    private File file;
+
+    DevDsm(File root) {
         this.root = root;
     }
 
-    public Value require(String name) throws IOException {
-        File file = new File(root, name + ".js");
-        if (!file.isFile()) {
-            throw new IllegalArgumentException("dsm.require: script not found: " + file);
+    public void dwrite(String text) throws IOException {
+        if (file == null) {
+            File created = new File(root, LocalDateTime.now().format(FILE_NAME) + ".txt");
+            Files.writeString(created.toPath(), text, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW);
+            file = created;
+        } else {
+            Files.writeString(file.toPath(), text, StandardCharsets.UTF_8, StandardOpenOption.APPEND);
         }
-        return context.eval(Source.newBuilder("js", file).build());
     }
 }

@@ -14,25 +14,44 @@ param(
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
-$cpFile = Join-Path $root "target\classpath.txt"
-$classes = Join-Path $root "target\classes"
+$bundledJdk = Join-Path $root "runtime\jdk"
 
-# Build when classes are missing or pom.xml / Java sources are newer than the last build.
-$stale = -not (Test-Path $cpFile)
-if (-not $stale) {
-    $built = (Get-Item $cpFile).LastWriteTime
-    $inputs = @(Get-Item (Join-Path $root "pom.xml")) + @(Get-ChildItem -Recurse (Join-Path $root "src\main") -File)
-    $stale = [bool]($inputs | Where-Object { $_.LastWriteTime -gt $built })
-}
-if ($stale) {
-    Write-Host "[run.ps1] building..."
-    & mvn -q -f (Join-Path $root "pom.xml") compile
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    (Get-Item $cpFile).LastWriteTime = Get-Date
-}
+if (Test-Path $bundledJdk) {
+    # Offline bundle (see make-bundle.ps1): use the bundled JDK and jars, never Maven or the network.
+    $java = Join-Path $bundledJdk "bin\java.exe"
+    $classes = Join-Path $root "classes"
+    $cp = "$classes;$root\lib\*"
 
-$java = if ($env:JAVA_HOME) { Join-Path $env:JAVA_HOME "bin\java.exe" } else { "java" }
-$cp = "$classes;" + (Get-Content $cpFile -Raw).Trim()
+    # Recompile with the bundled javac when Java sources are newer than the classes.
+    $sources = @(Get-ChildItem -Recurse (Join-Path $root "src\main\java") -Filter *.java)
+    $built = (Get-ChildItem -Recurse $classes -Filter *.class | Measure-Object LastWriteTime -Maximum).Maximum
+    if ($sources | Where-Object { $_.LastWriteTime -gt $built }) {
+        Write-Host "[run.ps1] compiling..."
+        & (Join-Path $bundledJdk "bin\javac.exe") -encoding UTF-8 --release 21 -proc:none -cp "$root\lib\*" -d $classes ($sources | ForEach-Object { $_.FullName })
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
+}
+else {
+    $cpFile = Join-Path $root "target\classpath.txt"
+    $classes = Join-Path $root "target\classes"
+
+    # Build when classes are missing or pom.xml / Java sources are newer than the last build.
+    $stale = -not (Test-Path $cpFile)
+    if (-not $stale) {
+        $built = (Get-Item $cpFile).LastWriteTime
+        $inputs = @(Get-Item (Join-Path $root "pom.xml")) + @(Get-ChildItem -Recurse (Join-Path $root "src\main") -File)
+        $stale = [bool]($inputs | Where-Object { $_.LastWriteTime -gt $built })
+    }
+    if ($stale) {
+        Write-Host "[run.ps1] building..."
+        & mvn -q -f (Join-Path $root "pom.xml") compile
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        (Get-Item $cpFile).LastWriteTime = Get-Date
+    }
+
+    $java = if ($env:JAVA_HOME) { Join-Path $env:JAVA_HOME "bin\java.exe" } else { "java" }
+    $cp = "$classes;" + (Get-Content $cpFile -Raw).Trim()
+}
 
 $opts = @()
 if ($InspectBrk) { $opts += "--inspect-brk=$Port" }

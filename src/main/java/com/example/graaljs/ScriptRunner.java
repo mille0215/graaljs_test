@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
-import org.graalvm.polyglot.Source;
 
 /**
  * Nashorn (jjs) の代わりに GraalJS でスクリプトを実行するランナー。
@@ -76,10 +75,11 @@ public final class ScriptRunner {
 
         int exitCode = 0;
         try (Context context = builder.build()) {
-            // 本番システムが注入している dsm の開発用代替。require の読み込み基準は実行したスクリプトのフォルダ
-            context.getBindings("js").putMember("dsm", new DevDsm(context, script.getParentFile()));
-            Source source = Source.newBuilder("js", script).build();
-            context.eval(source);
+            // 本番システムが注入している dtm の開発用代替。require の読み込み基準は実行したスクリプトのフォルダ
+            context.getBindings("js").putMember("dtm", new DevDtm(context, script.getParentFile()));
+            // dwrite の出力先は実行したスクリプトのフォルダ
+            context.getBindings("js").putMember("dsm", new DevDsm(script.getParentFile()));
+            context.eval(DietTemplate.load(script));
         } catch (PolyglotException e) {
             exitCode = report(e);
         } catch (Exception e) {
